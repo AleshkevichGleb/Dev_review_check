@@ -18,7 +18,7 @@ const CustomButton: FC<CustomButtonProps> = ({ title, onPress, addStyle}) => {
 const styles = StyleSheet.create({
     button: {
         backgroundColor: '#FF5733',
-        paddingVertical: 15, // Увеличение высоты кнопки
+        paddingVertical: 15,
         paddingHorizontal: 20,
         borderRadius: 10,
     },
