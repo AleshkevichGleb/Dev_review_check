@@ -1,4 +1,12 @@
 module.exports = {
-  root: true,
-  extends: '@react-native',
-};
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "plugins": [
+        "import"
+    ],
+    "rules": {
+        // Дополнительные правила ESLint
+    }
+}
