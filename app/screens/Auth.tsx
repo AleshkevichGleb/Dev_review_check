@@ -1,8 +1,10 @@
 import {ActivityIndicator, Button, SafeAreaView, StyleSheet, Text, TextInput, View, Alert} from 'react-native';
 import { LoginUser } from '../types/types';
-import { FC, useState } from 'react';
+import {FC, useEffect, useState} from 'react';
 import {authFirebase} from "../../firebase.js";
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from "firebase/auth";
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged} from "firebase/auth";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const Auth: FC = ({navigation}: any) => {
     const [isRegistration, setIsRegistration] = useState<boolean>(false);
@@ -13,27 +15,52 @@ const Auth: FC = ({navigation}: any) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const auth = authFirebase;
 
+    useEffect(() => {
+        const checkUserToken = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                if (token) {
+                    navigation.navigate('Home');
+                }
+            } catch (error) {
+                console.error('Ошибка проверки токена:', error);
+            }
+        };
+        checkUserToken();
+    }, []);
+
+    const saveToken = async (token: string) => {
+        try {
+            await AsyncStorage.setItem('userToken', token);
+        } catch (error) {
+            console.error('Ошибка при сохранении токена:', error);
+        }
+    };
+
     const authHandler = async() => {
         setIsLoading(true);
         try {
             if(isRegistration) {
                 const response = await createUserWithEmailAndPassword(auth, user.email, user.password);
-                console.log(response);
+                const token = await response.user.getIdToken();
+                await saveToken(token);
+
+                setUser({email: response.user.email || '', password: ''});
             } else {
                 const response = await signInWithEmailAndPassword(auth, user.email, user.password);
-                console.log(response);
+                const token = await response.user.getIdToken();
+                await saveToken(token);
+
+                setUser({email: response.user.email || '', password: ''});
             }
             navigation.navigate('Home');
-            setUser({email: '', password: ''});
         } catch (e: any) {
-            console.log(e)
+            console.log(e);
             Alert.alert('Error: ', e.message);
         } finally {
             setIsLoading(false);
         }
-    }
-
-
+    };
 
     return (
         <SafeAreaView style = {style.conainer}>
@@ -123,7 +150,3 @@ const style = StyleSheet.create({
         textDecorationLine: 'underline'
     }
 })
-
-function alert(arg0: string) {
-    throw new Error('Function not implemented.');
-}

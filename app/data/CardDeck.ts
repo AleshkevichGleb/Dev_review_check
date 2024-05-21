@@ -1,6 +1,111 @@
 import {Card} from "../types/types.ts";
-
+import chip5 from "../assets/images/5US.png"
+import chip10 from "../assets/images/10US.png"
+import chip20 from "../assets/images/20US.png"
+import chip100 from "../assets/images/100US.png"
+export const chipImages: { [key: string]: any } = {
+    '5': chip5,
+    '10': chip10,
+    '20': chip20,
+    '100': chip100
+};
 export const cardDeck: Card[] = [
+    {
+        id: 37,
+        name: '2',
+        value: 2,
+        suit: "♣"
+    },
+    {
+        id: 38,
+        name: '2',
+        value: 2,
+        suit: "♠"
+    },
+    {
+        id: 39,
+        name: '2',
+        value: 2,
+        suit: "♦"
+    },
+    {
+        id: 40,
+        name: '2',
+        value: 2,
+        suit: "♥"
+    },
+    {
+        id: 41,
+        name: '3',
+        value: 3,
+        suit: "♣"
+    },
+    {
+        id: 42,
+        name: '3',
+        value: 3,
+        suit: "♠"
+    },
+    {
+        id: 43,
+        name: '3',
+        value: 3,
+        suit: "♦"
+    },
+    {
+        id: 44,
+        name: '3',
+        value: 3,
+        suit: "♥"
+    },
+    {
+        id: 45,
+        name: '4',
+        value: 4,
+        suit: "♣"
+    },
+    {
+        id: 46,
+        name: '4',
+        value: 4,
+        suit: "♠"
+    },
+    {
+        id: 47,
+        name: '4',
+        value: 4,
+        suit: "♦"
+    },
+    {
+        id: 48,
+        name: '4',
+        value: 4,
+        suit: "♥"
+    },
+    {
+        id: 49,
+        name: '5',
+        value: 5,
+        suit: "♣"
+    },
+    {
+        id: 50,
+        name: '5',
+        value: 5,
+        suit: "♠"
+    },
+    {
+        id: 51,
+        name: '5',
+        value: 5,
+        suit: "♦"
+    },
+    {
+        id: 52,
+        name: '5',
+        value: 5,
+        suit: "♥"
+    },
     {
         id: 1,
         name: '6',

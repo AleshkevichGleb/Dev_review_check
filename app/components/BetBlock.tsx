@@ -1,13 +1,17 @@
-import { FC } from "react";
+import React, {FC, useEffect, useState} from "react";
 import CustomButton from "./CustomButton.tsx";
 import {Context, FSMStates, IBet} from "../types/types.ts";
-import {View, ImageBackground, Text, TouchableOpacity, Image, StyleSheet} from "react-native";
+import {Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import FSM from "../services/FSM.ts";
 import chip5 from '../assets/images/5US.png';
 import chip10 from '../assets/images/10US.png';
 import chip20 from '../assets/images/20US.png';
 import chip100 from '../assets/images/100US.png';
 import {TWENTY_ONE} from "../constants/constants.ts";
+import {chipImages} from "../data/CardDeck.ts";
+import CustomModal from "./AnimatedPopup.tsx";
+import {useAppDispatch} from "../hooks/useReducer.ts";
+import {decreaseCash, increaseCash} from "../store/user.slice.ts";
 
 interface BetBlockProps {
     fsm: FSM,
@@ -16,24 +20,59 @@ interface BetBlockProps {
     bet: IBet[],
     setBet: (bet: IBet[]) => void,
     betNum: number
+    setIsDouble: (isDouble: boolean) => void,
 }
 
-const BetBlock: FC<BetBlockProps> = ({fsmData, bet, setBet, setFsmData, fsm, betNum}) => {
+const BetBlock: FC<BetBlockProps> = ({fsmData, bet, setIsDouble, setBet, setFsmData, fsm, betNum}) => {
+    const dispatch = useAppDispatch();
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [isBetNull, setIsBetNull] = useState(false);
+    const [isSplit, setIsSplit] = useState(false);
 
+    useEffect(() => {
+        if(fsmData.state === FSMStates.USER_WON) dispatch(increaseCash(betNum * 2));
+        if(fsmData.state === FSMStates.DRAW) dispatch(increaseCash(betNum));
+    }, [fsmData.state]);
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
+    };
     const startGame = () => {
+        setIsBetNull(false);
+        setIsSplit(false);
+        if(betNum === 0) {
+            setIsBetNull(true);
+            setModalVisible(true);
+            return;
+        }
+        dispatch(decreaseCash(betNum));
         fsm.handleEvent("start");
-        setFsmData({...fsm})
+        setFsmData({context: fsm.context, state: fsm.state});
+
+
+        if(fsm.context.playerCards[0].name === fsm.context.playerCards[1].name) {
+            setIsSplit(true);
+            setModalVisible(true);
+            return;
+        }
+
         if(fsmData.context.playerScore === TWENTY_ONE) fsm.handleEvent('skip');
+        console.log(fsmData.context.playerCards)
     }
 
     const addCard = () => {
         fsm.handleEvent('hit');
-        setFsmData({...fsm})
-        // if(fsm.context.playerScore === TWENTY_ONE) fsm.handleEvent('skip');
+        setFsmData({context: fsm.context, state: fsm.state});
     }
 
     const skip = () => {
         fsm.handleEvent('skip')
+        setFsmData({context: fsm.context, state: fsm.state});
+    }
+
+    const double = () => {
+        dispatch(decreaseCash(betNum));
+        fsm.handleEvent('x2');
+        setIsDouble(true);
         setFsmData({context: fsm.context, state: fsm.state});
     }
 
@@ -73,7 +112,7 @@ const BetBlock: FC<BetBlockProps> = ({fsmData, bet, setBet, setFsmData, fsm, bet
                     <View style={styles.betBlock__images}>
                         {bet.map(betItem =>
                             <TouchableOpacity key = {betItem.bet} onPress={() => deleteBet(betItem.bet)}>
-                                <Image style={styles.chip} source={betItem.image}/>
+                                <Image style={styles.chip} source={chipImages[betItem.bet]} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -82,10 +121,10 @@ const BetBlock: FC<BetBlockProps> = ({fsmData, bet, setBet, setFsmData, fsm, bet
             {
                 fsmData.state !== FSMStates.BET
                     ?
-                        // fsmData.state === FSMStates.USER_PLAY &&
+
                         <View style={styles.chipBlock}>
                             <CustomButton addStyle={styles.gameButton} title={'Add card'} onPress={addCard}/>
-                            <CustomButton addStyle={styles.gameButton} title={'X2'} onPress={addCard}/>
+                            <CustomButton addStyle={styles.gameButton} title={'X2'} onPress={double}/>
                             <CustomButton addStyle={styles.gameButton} title={'Skip'} onPress={skip}/>
                         </View>
                     : <>
@@ -106,11 +145,43 @@ const BetBlock: FC<BetBlockProps> = ({fsmData, bet, setBet, setFsmData, fsm, bet
                         <CustomButton title={'Deal Cards'} onPress={startGame} addStyle={styles.button}/>
                     </>
             }
+            {
+                isBetNull &&
+                <CustomModal isVisible={isModalVisible} onClose={toggleModal}>
+                    <Text style={styles.modalText}>Do a bet</Text>
+                    <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </CustomModal>
+            }
+            {
+                isSplit &&
+                <CustomModal isVisible={isModalVisible} onClose={toggleModal}>
+                    <Text style={styles.modalText}>Make a split</Text>
+                    <View style={styles.splitContainer}>
+                        <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+                            <Text style={styles.closeButtonText}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+                            <Text style={styles.closeButtonText}>No</Text>
+                        </TouchableOpacity>
+                    </View>
+                </CustomModal>
+            }
         </ImageBackground>
     )
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalText: {
+        fontSize: 18,
+        marginBottom: 10,
+    },
     userBlock: {
         display: "flex",
         flexDirection: 'column',
@@ -143,8 +214,9 @@ const styles = StyleSheet.create({
     },
 
     gameButton: {
-        backgroundColor: 'grey',
+        backgroundColor: '#2196F3',
         width: 115,
+        paddingVertical: 7,
     },
 
     chip: {
@@ -153,8 +225,28 @@ const styles = StyleSheet.create({
         height: 50
     },
     button: {
-        backgroundColor: 'grey',
+        backgroundColor: '#2196F3',
         paddingVertical: 10,
+    },
+
+    splitContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 10,
+    },
+
+    closeButton: {
+        display: 'flex',
+        justifyContent:'center',
+        alignItems: 'center',
+        marginTop: 10,
+        padding: 10,
+        minWidth: 70,
+        backgroundColor: '#2196F3',
+        borderRadius: 5,
+    },
+    closeButtonText: {
+        color: 'white',
     },
 });
 export default BetBlock;

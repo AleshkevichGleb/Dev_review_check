@@ -13,22 +13,36 @@ class FSM {
     };
     state: FSMStates = FSMStates.BET;
 
-    handleEvent(event: 'start' | 'hit' | 'skip') {
+    handleEvent(event: 'start' | 'hit' | 'skip' | 'x2') {
         switch (event) {
             case "start": {
+                this.state = FSMStates.USER_PLAY
                 this.startGame();
                 this.countScore()
-                this.state = FSMStates.USER_PLAY
+
+                if(this.context.playerScore === TWENTY_ONE)
+                    this.checkResult();
+
                 break;
             }
             case "hit": {
                 this.context.playerCards.push(this.drawCard())
                 this.countScore();
 
-                if(this.context.playerScore >= 21) this.checkResult();
+                if(this.context.playerScore >= TWENTY_ONE)
+                    this.checkResult();
 
                 break;
             }
+
+            case "x2": {
+                this.context.playerCards.push(this.drawCard())
+                this.countScore();
+                this.checkResult();
+
+                break;
+            }
+
             case "skip": {
                 this.state = FSMStates.BOT_PLAY;
                 this.dealerPlay();
@@ -43,42 +57,60 @@ class FSM {
 
         if(playerScore === dealerScore) {
             this.state = FSMStates.DRAW;
-        } else if (playerScore > TWENTY_ONE || playerScore < TWENTY_ONE && playerScore < dealerScore && dealerScore < TWENTY_ONE ) {
+        } else if (playerScore > TWENTY_ONE || playerScore < TWENTY_ONE && playerScore < dealerScore && dealerScore <= TWENTY_ONE ) {
             this.state = FSMStates.USER_LOST;
         } else if (playerScore > dealerScore && playerScore <= TWENTY_ONE) {
             this.state = FSMStates.USER_WON;
         } else if (dealerScore > TWENTY_ONE && playerScore <= TWENTY_ONE) {
-            console.log('aaaaaaa')
             this.state = FSMStates.USER_WON;
         }
 
     }
 
     drawCard(): Card {
-        console.log(this.context.allCards)
         const randomIndex = Math.floor(Math.random() * this.context.allCards.length);
-        return this.context.allCards.splice(randomIndex, 1)[0];
+        const drawCard = this.context.allCards[randomIndex];
+        this.context.allCards = this.context.allCards.filter(card => card.id !== drawCard.id);
+        return drawCard
     }
-    // drawCard(): Card {
-    //     const randomIndex = Math.floor(Math.random() * this.context.allCards.length);
-    //     return this.context.allCards[randomIndex];
-    // }
     dealerPlay() {
         while (this.context.dealerScore < this.context.playerScore && this.context.dealerScore < 20) {
-            this.context.dealerCards.push(this.drawCard());
+            this.context.dealerCards.push(this.drawCard())
             this.countScore();
         }
         this.checkResult();
     }
     countScore() {
-        this.context.dealerScore = this.context.dealerCards.reduce((acc, card) =>
-            (card.name === 'T' && acc + 11 > 21) ?  acc + 1 : acc + card.value, 0);
+        const calculateScore = (cards: Card[]) => {
+            let totalScore = 0;
+            let acesCount = 0;
 
-        this.context.playerScore = this.context.playerCards.reduce((acc, card) =>
-            (card.name === 'T' && acc + 11 > 21) ?  acc + 1 : acc + card.value, 0);
+            for (const card of cards) {
+                if (card.name === 'T') {
+                    acesCount += 1;
+                    totalScore += 11;
+                } else {
+                    totalScore += card.value;
+                }
+            }
+
+            while (totalScore > 21 && acesCount > 0) {
+                totalScore -= 10;
+                acesCount -= 1;
+            }
+
+            return totalScore;
+        }
+
+        this.context.dealerScore = calculateScore(this.context.dealerCards);
+        this.context.playerScore = calculateScore(this.context.playerCards);
     }
 
     startGame() {
+        this.context.playerCards = [];
+        this.context.dealerCards = [];
+        this.context.allCards = [...cardDeck];
+
         this.context.playerCards = [this.drawCard(), this.drawCard()];
         this.context.dealerCards = [this.drawCard(), this.drawCard()];
     }

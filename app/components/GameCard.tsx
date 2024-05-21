@@ -19,8 +19,8 @@ const GameCard: FC<GameCardProps> = ({card}) => {
 const styles = StyleSheet.create({
     card: {
         position: 'relative',
-        width: 85,
-        height: 120,
+        width: 70,
+        height: 105,
         backgroundColor: '#fff',
         borderRadius: 5,
         padding: 10,

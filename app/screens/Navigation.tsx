@@ -10,13 +10,12 @@ const Stack = createNativeStackNavigator();
 const Navigation = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName='Home'>
+      <Stack.Navigator initialRouteName='Auth'>
           <Stack.Screen name="Home" component={Home} options={{headerShown: false}} />
           <Stack.Screen name="Auth" component={Auth} options={{headerShown: false}} />
-          <Stack.Screen name="Game" component={Game} options={{headerTitleAlign: 'center', headerBlurEffect: 'dark'}}/>
+          <Stack.Screen name="Game" component={Game} options={{headerShown: false, headerTitleAlign: 'center', headerBlurEffect: 'dark'}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
 export default Navigation;
